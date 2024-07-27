@@ -116,7 +116,7 @@ function importAsset() {
     else
       if [[ $assetType = flowservice* ]]; then
         FLOW_URL=${LOCAL_DEV_URL}/apis/v1/rest/projects/${repoName}/flow-import
-		cd ${HOME_DIR}/assets/flowservices/${repoName}
+		cd ${HOME_DIR}/flowservices/${repoName}
         #cd ${HOME_DIR}/${repoName}/assets/flowservices
         echod "Flowservice Import:" ${FLOW_URL}
         echod $(ls -ltr)

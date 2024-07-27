@@ -1,8 +1,8 @@
-GITURL=https://gitlab.com/webmio/POC.git
-LOCALREPOPATH="D:\PSL\Projects\Trumia\repository\POC\POC\Play\assets"
-TENANTURL=https://persistentipaas.int-aws-us.webmethods.io
-USERNAME=api_user
-PASSWORD=DemoUser@123
+GITURL=https://github.com/shabdguptaPSL/TestRepoCICD.git
+LOCALREPOPATH="D:\PSL\DevOps\gitrepo\TestRepoCICD\DevOps\Jenkins\Assets"
+TENANTURL=https://env781045.int-aws-de.webmethods.io
+USERNAME=apiuserdev
+PASSWORD=Apiuser@123456789
 EXPORTSCRIPT=exportAsset.sh
 inlcudeAllReferenceData=false
 debug=debug

@@ -1,2 +1,2 @@
-LOCALREPOPATH="D:\TRUMIA\repository"
-GITURL=https://gitlab.com/webmio/POC.git
+LOCALREPOPATH="D:\PSL\DevOps\gitrepo\TestRepoCICD"
+GITURL=https://github.com/shabdguptaPSL/TestRepoCICD.git
