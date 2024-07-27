@@ -1,0 +1,268 @@
+pipeline {
+    
+	libraries {
+        lib("CDlib@5.Latest")
+    }
+	
+    agent {
+        
+		kubernetes {
+            cloud 'prod-prg'
+            inheritFrom 'jenkins-slave-prg'
+            customWorkspace "jobs/$JOB_NAME/$BUILD_NUMBER"
+            yamlFile 'DevOps/Jenkins/agentmaven.yaml'
+  }
+}
+
+
+	
+	parameters{
+    
+	choice(name: 'PRODUCT', choices: ['MSR', 'MWS', 'UM'], description: 'Choose the product')
+
+    choice(name: 'ENVIRONMENT', choices: ['DEV', 'SIT', 'UAT'], description: 'Choose the environment')
+
+	string(name: 'APPROVER', defaultValue: 'ashok.kumar1@dhl.com', description: 'Comma Separated Email IDs of Approvers')
+	
+	string(name: 'SUBMITTER', defaultValue: 'ashkuma', description: 'Comma Separated IDs of Approval Submitters')
+
+
+	}
+
+	environment {
+
+    BUILD_NAME = "${JOB_NAME} #${BUILD_NUMBER}".replaceAll('[^\\w\\s-]', '')
+	POD_NAME = ''
+	
+	//OC Details 
+	OC_URL = ''
+	OC_TOKEN = ''
+	ENVIRONMENT_NAMESPACE= ''
+	
+	//HELM Details
+	HELM_FOLDERNAME = ''
+	
+	//
+	HELM_CHART = 'cronjob'
+	
+	
+	 }
+	 
+	 stages {
+		
+		stage('Get Properties') {
+			steps {
+				script {			
+
+				try{
+                // Load properties from a properties file
+                def props = readProperties file: 'DevOps/Jenkins/properties/jenkins.properties'
+                
+                            
+                def getProductPropertiesScript = load 'DevOps/Jenkins/properties/getImageProperties'
+                def productProperties = getProductPropertiesScript.getProductProperties(env.PRODUCT, env.ENVIRONMENT)
+
+                OC_URL = "${props['OC_URL']}"
+                OC_TOKEN = productProperties.OC_TOKEN
+                echo productProperties.OC_TOKEN
+                ENVIRONMENT_NAMESPACE = productProperties.ENVIRONMENT_NAMESPACE
+               // POD_NAME = productProperties.POD_NAME
+                POD_NAME = env.PRODUCT.toLowerCase()
+                HELM_FOLDERNAME = 'DevOps/Helm/cronjob'
+                
+                
+                println("Environment Namespace : ${ENVIRONMENT_NAMESPACE}")
+                println("POD_NAME: ${POD_NAME}")
+                println("Helm_FOLDERNAME: ${HELM_FOLDERNAME}")
+                
+				}
+				catch (Exception e) {
+						currentBuild.result = 'FAILURE'
+						throw e
+					}
+				
+				}
+			}
+		}
+		
+		stage('Send for Deployment Approval') {
+			steps {
+				script {
+					def approvalStatus = null		
+					// Send approval request email
+					emailext mimeType: 'text/html',
+					subject: "APPROVAL REQUEST DEPLOYMENT[JENKINS] ${BUILD_NAME}",
+					to: "${APPROVER}",
+					body: """
+							<p>Dear Concerned Person,</p>
+							<p>This is an automated approval request for the Jenkins build:</p>
+							<ul>
+							<li><b>Build URL:</b> <a href="${BUILD_URL}">${BUILD_URL}</a></li>						
+							<li><b>Build Number:</b> ${BUILD_NUMBER} </li>
+							<li><b>Build Name:</b>${BUILD_NAME}</li>
+							</ul>
+							<p>Please review the build details and click the button below to approve or decline:</p>
+							<p>  
+							<a href="${BUILD_URL}input?approvalStatus=approve" id="approveLink">
+							<button style="background-color: #4CAF50; color: white; padding: 10px 15px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">Approve</button>
+							</a> 
+							&nbsp; | &nbsp;  
+							<a href="${BUILD_URL}input?approvalStatus=decline" id="declineLink">
+							<button style="background-color: #f44336; color: white; padding: 10px 15px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">Decline</button>
+							</a>
+							</p>
+							<p id="approval-status">Thank you for your prompt attention.</p>
+							<p>Best Regards,<br/>Your Jenkins Server</p>
+						"""
+			
+					// Wait for user input (approval or rejection)
+					timeout(time: 180, unit: 'MINUTES') {
+						// Use input step to wait for approval or rejection
+						def userInput = input(                             
+						message: 'Please approve or decline the Jenkins job for the Deployment.',                             
+						ok: 'Submit',                             
+						submitter: "${SUBMITTER}",                             
+						submitterParameter: 'approverId',                             
+						parameters: [choice(name: 'approvalStatus', choices: ['Approve', 'Decline'], description: 'Please approve or decline ')]
+						)
+						// Set the approvalStatus based on user input
+						approvalStatus = userInput.approvalStatus
+					}
+					echo approvalStatus
+					// Check approval status
+					if (approvalStatus == 'Approve') {
+						echo 'Build approved! Proceeding with deployment...'
+					} 
+					else if (approvalStatus == 'Decline') {
+						error 'Build declined. Aborting the deployment.'
+						currentBuild.result = 'ABORTED'
+						return
+					} 
+					else {
+						error 'No response received within the timeout period. Aborting the deployment.'
+						currentBuild.result = 'ABORTED'
+						return
+					
+					}
+				}
+			}	
+		}
+		
+	    stage('Helm Deploy') {
+			steps {
+				
+				container('jnlp'){
+				
+				 sh """
+				  echo "login to OpenShift....."
+
+				  echo "oc login --token=${OC_TOKEN} --server=${OC_URL} -n ${ENVIRONMENT_NAMESPACE}"
+				  
+				  oc login --kubeconfig='~/.kube/config' --token=$OC_TOKEN --server=$OC_URL -n ${ENVIRONMENT_NAMESPACE}
+				  
+				  oc --kubeconfig='~/.kube/config' project ${ENVIRONMENT_NAMESPACE}
+				  
+				  """
+				  
+				}
+				
+				container('helm')
+				{
+				sh """
+				
+				 echo "helm version"
+				
+				 helm version
+				 
+				 echo "helm template  ${HELM_CHART}  "${HELM_FOLDERNAME}" -f \"${HELM_FOLDERNAME}/${ENVIRONMENT}/common/values.yaml\" -s templates/*.yaml --kubeconfig='~/.kube/config'"
+				 
+				 helm template  ${HELM_CHART}  "${HELM_FOLDERNAME}" -f \"${HELM_FOLDERNAME}/${ENVIRONMENT}/common/values.yaml\" -s templates/*.yaml --kubeconfig='~/.kube/config'
+				 
+				 echo "Helm Deploy : ${HELM_CHART}"
+
+				
+				 echo "helm Install/Upgrade chart..."
+				 
+					 
+				 echo "helm install  ${HELM_CHART}  "${HELM_FOLDERNAME}" -f \"${HELM_FOLDERNAME}/${ENVIRONMENT}/common/values.yaml\" --kubeconfig='~/.kube/config'"
+			   
+			     helm upgrade --install  ${HELM_CHART}  "${HELM_FOLDERNAME}" -f "${HELM_FOLDERNAME}/${ENVIRONMENT}/common/values.yaml" --kubeconfig='~/.kube/config' 
+				 
+				 echo "helm Installed/Upgraded chart..."
+				 
+				 echo "helm list"
+				 
+				 helm ls --kubeconfig='~/.kube/config' 
+				 				
+
+                 """
+				}
+
+			}
+
+				}
+					
+		
+	 }
+ 
+
+post {
+		failure {
+          
+		  echo "Failure action"
+
+		             emailext subject: "Jenkins Pipeline Failed: ${BUILD_NAME}",
+                      body: """
+							<html>
+							<body>
+							<p>Jenkins Pipeline failed for ${JOB_NAME} - ${BUILD_NUMBER}}.</p>
+							<p>Build URL: <a href="${BUILD_URL}">${BUILD_URL}</a></p>
+							<table border="1">
+							<tr>
+							<th>Job Name</th>
+							<th>Build Number</th>
+							<th>Product</th>
+							</tr>
+							<tr>
+							<td>${JOB_NAME}</td>
+							<td>${BUILD_NUMBER}</td>
+							<td>${PRODUCT}</td>
+							</tr>
+							</table>
+							</body>
+							</html>
+                      """,
+                      recipientProviders: [ requestor() ],
+                      mimeType: 'text/html'
+
+        }
+        success {
+           
+		   echo "Success action"
+
+		    emailext subject: "Jenkins Pipeline Success: ${BUILD_NAME}",
+                      body: """
+							<html>
+							<body>
+							<p>Jenkins Pipeline failed for ${JOB_NAME} - ${BUILD_NUMBER}.</p>
+							<p>Build URL: <a href="${BUILD_URL}">${BUILD_URL}</a></p>
+							<table border="1">
+							<tr>
+							<th>Job Name</th>
+							<th>Build Number</th>
+							<th>Product</th>
+							</tr>
+							<tr>
+							<td>${JOB_NAME}</td>
+							<td>${BUILD_NUMBER}</td>
+							<td>${PRODUCT}</td>
+							</tr>
+							</table>
+							</body>
+							</html>
+                      """,
+                      recipientProviders: [ requestor() ],
+                      mimeType: 'text/html'
+        }
+	}
+}
