@@ -110,7 +110,7 @@ function importAsset() {
     if [[ $assetType = workflow* ]]; then
         FLOW_URL=${LOCAL_DEV_URL}/apis/v1/rest/projects/${repoName}/workflow-import
         #cd ${HOME_DIR}/${repoName}/assets/workflows
-		cd ${HOME_DIR}/assets/workflows/${repoName}
+		cd ${HOME_DIR}/workflows/${repoName}
         echod "Workflow Import:" ${FLOW_URL}
         echod $(ls -ltr)
     else
