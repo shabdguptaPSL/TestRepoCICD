@@ -1,0 +1,2 @@
+LOCALREPOPATH="D:\TRUMIA\repository"
+GITURL=https://gitlab.com/webmio/POC.git

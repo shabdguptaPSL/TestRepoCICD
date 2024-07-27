@@ -1,0 +1,121 @@
+LOCAL_DEV_URL=$1
+admin_user=$2
+admin_password=$3
+repoName=$4
+assetID=$5
+assetType=$6
+HOME_DIR=$7
+synchProject=$8
+source_type=$9
+
+
+
+
+
+// for jq
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/scripts
+$ curl -L -o /usr/bin/jq.exe https://github.com/stedolan/jq/releases/latest/download/jq-win64.exe
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+100  962k  100  962k    0     0   312k      0  0:00:03  0:00:03 --:--:-- 2042k
+
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/scripts
+$ jq --version
+jq-1.7.1
+
+// for GIT
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/repository/POC/POC/Play/assets (main)
+$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        new file:   flowservices/SGDemo/Map_Accelerator.zip
+
+
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/repository/POC/POC/Play/assets (main)
+$ git pull
+Already up to date.
+
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/repository/POC/POC/Play/assets (main)
+$ git branch
+* main
+
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/repository/POC/POC/Play/assets (main)
+$ git commit -m "SGDemo project"
+[main 2c57d16] SGDemo project
+ Committer: Shabd Gupta <shabd_gupta@persistent.com>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 Play/assets/flowservices/SGDemo/Map_Accelerator.zip
+
+shabd_gupta@PSL-GWX92B3 MINGW64 /d/PSL/Projects/Trumia/repository/POC/POC/Play/assets (main)
+$ git push
+Enumerating objects: 10, done.
+Counting objects: 100% (10/10), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (7/7), 9.31 KiB | 4.65 MiB/s, done.
+Total 7 (delta 1), reused 0 (delta 0), pack-reused 0
+To https://gitlab.com/webmio/POC.git
+   798e7e5..2c57d16  main -> main
+   
+   
+bash exportAsset.sh  https://persistentipaas.int-aws-us.webmethods.io  api_user  DemoUser@123  Trumia_CICD Loop_AcceleratorJSON flowservice  "D:\PSL\Projects\Trumia\repository\POC\POC\Play\assets" false sourceType false debug
+
+
+
+bash initializeExport.sh featureSG Trumia_CICD flowservice sampleMap
+
+bash initializeExport.sh featureSG Trumia_CICD workflow sampleWF
+
+bash initializeExport.sh featureSG Trumia_CICD referenceData CountryCodes
+
+bash initializeExport.sh featureSG Trumia_CICD parameters play 
+bash initializeExport.sh featureSG Trumia_CICD accounts play
+
+bash createProject.sh Trumia_CICD
+
+bash createProject.sh CICD_Automation
+
+bash initializeImport.sh featureSG Trumia_CICD flowservice sampleMap
+
+bash initializeImport.sh featureSG Trumia_CICD referenceData CountryCodes
+
+bash initializeImport.sh featureSG Trumia_CICD workflow sampleWF
+
+bash initializeImport.sh featureSG Trumia_CICD parameters play
+
+bash initializeImport.sh featureSG Trumia_CICD accounts play
+
+
+https://persistentipaas.int-aws-us.webmethods.io/apis/v1/rest/projects/Trumia_CICD/workflows/sampleWF/export
+<domain>/apis/v1/rest/projects/:project/workflows/:workflow/export
+
+https://persistentipaas.int-aws-us.webmethods.io/apis/v1/rest/projects/Trumia_CICD/workflows/sgsampleWF/export
+
+
+REPOSITORY SERVER:
+
+1. Pull feature branch and developer.
+2. commit to feature branch and push to remote feature branch.
+3. ---> pull request for merging to DEV .it should call script with inputs source branch and target branch... 
+		it should merge to DEV branch.
+4. automation script/runner ... check out dev branch and import code to DEV environment.
+
+

@@ -1,0 +1,11 @@
+GITURL=https://gitlab.com/webmio/POC.git
+LOCALREPOPATH="D:\PSL\Projects\Trumia\repository\POC\POC\Play"
+TENANTURL=https://env159503.int-aws-de.webmethods.io
+USERNAME=aadityac
+PASSWORD=DontForgotPassword@123
+CREATEPROJECTSCRIPT=createProject.sh
+IMPORTSCRIPT=importAsset.sh
+inlcudeAllReferenceData=true
+debug=debug
+sourceType=play
+synchProject=false

@@ -1,0 +1,10 @@
+GITURL=https://gitlab.com/webmio/POC.git
+LOCALREPOPATH="D:\PSL\Projects\Trumia\repository\POC\POC\Play\assets"
+TENANTURL=https://persistentipaas.int-aws-us.webmethods.io
+USERNAME=api_user
+PASSWORD=DemoUser@123
+EXPORTSCRIPT=exportAsset.sh
+inlcudeAllReferenceData=false
+debug=debug
+sourceType=play
+synchProject=false
