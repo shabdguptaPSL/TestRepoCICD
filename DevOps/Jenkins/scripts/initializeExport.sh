@@ -40,14 +40,14 @@ echo $assetType
 
 bash $EXPORTSCRIPT  $TENANTURL  $USERNAME $PASSWORD  $projectName $assestID $assetType  $LOCALREPOPATH $synchProject $sourceType $inlcudeAllReferenceData $debug
 
-cd $LOCALREPOPATH
+#cd $LOCALREPOPATH
 
-git checkout "$branchName"
+#git checkout "$branchName"
 
-git pull
+#git pull
 
-git add .
+#git add .
 
-git commit -m "added new feature for project: '$projectName' branchName:'$branchName' assetType:'$assetType' assestID='$assestID' "
+#git commit -m "added new feature for project: '$projectName' branchName:'$branchName' assetType:'$assetType' assestID='$assestID' "
 
-git push
+#git push
